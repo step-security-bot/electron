@@ -121,3 +121,4 @@ preconnect_manager.patch
 fix_remove_caption-removing_style_call.patch
 build_allow_electron_to_use_exec_script.patch
 revert_use_accessibility_pkey_when_setting_page_access.patch
+add_allow_blocking_methods_as_friends.patch
