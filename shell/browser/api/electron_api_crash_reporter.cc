@@ -151,7 +151,7 @@ void Start(const std::string& submit_url,
   for (const auto& pair : extra)
     electron::crash_keys::SetCrashKey(pair.first, pair.second);
   {
-    base::ScopedAllowBlocking allow_blocking;
+    ScopedAllowBlockingForCrashReporter allow_blocking;
     ::crash_reporter::InitializeCrashpad(process_type.empty(), process_type);
   }
   if (ignore_system_crash_handler) {
@@ -178,8 +178,6 @@ void Start(const std::string& submit_url,
 #endif
 }
 
-class ScopedAllowBlockingForCrashReporter
-    : public base::ScopedAllowBlockingForTesting {};
 }  // namespace electron::api::crash_reporter
 
 namespace {
@@ -220,8 +218,7 @@ v8::Local<v8::Value> GetUploadedReports(v8::Isolate* isolate) {
   // synchronous version of getUploadedReports is deprecated so we can remove
   // our patch.
   {
-    electron::api::crash_reporter::ScopedAllowBlockingForCrashReporter
-        allow_blocking;
+    base::ScopedAllowBlocking allow_blocking;
     list->LoadSync();
   }
   std::vector<UploadList::UploadInfo> uploads;

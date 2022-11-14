@@ -1,22 +1,23 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
 From: VerteDinde <vertedinde@electronjs.org>
 Date: Fri, 11 Nov 2022 11:12:50 -0800
-Subject: build: add allow_blocking methods as friends in thread_restrictions
+Subject: build: expose ScopedAllowBlocking in thread_restrictions
 
 This patch comes after Chromium removed the ScopedAllowIO API in favor
 of explicitly adding ScopedAllowBlocking calls as friends. This patch
-adds the needed Electron methods that also require allowing blocking.
+exposes a public constructor/destructor for ScopedAllowBlocking.
 
 This patch can be removed if:
 1. We want to proceed with another method such as ScopedAllowBlockingForTesting,
 which doesn't require adding methods as friends.
+  * May be hard as a lot of ForTesting methods are IFDEF'd out in release builds
 2. Chromium implements another IO API that would allow blocking calls without
 needing to explicitly name the methods.
 
 Co-authored-by: George Xu <georgexu99@users.noreply.github.com>
 
 diff --git a/base/threading/thread_restrictions.h b/base/threading/thread_restrictions.h
-index 07fe653bd2d231b3dcab405dec5da21a576aa5d5..56ff62af7a33aee56e607125c44967e0738bfb13 100644
+index 07fe653bd2d231b3dcab405dec5da21a576aa5d5..2f8612060600b4dbc37d963b8e3be9992f1f8dee 100644
 --- a/base/threading/thread_restrictions.h
 +++ b/base/threading/thread_restrictions.h
 @@ -112,6 +112,7 @@ class FirefoxProfileLock;
@@ -27,49 +28,7 @@ index 07fe653bd2d231b3dcab405dec5da21a576aa5d5..56ff62af7a33aee56e607125c44967e0
  class Profile;
  class ProfileImpl;
  class StartupTabProviderImpl;
-@@ -135,6 +136,11 @@ class CookieManager;
- class ScopedAllowInitGLBindings;
- class VizCompositorThreadRunnerWebView;
- }  // namespace android_webview
-+namespace asar {
-+class ScopedAllowBlockingForAsarArchive;
-+class ScopedAllowBlockingForAsarCache;
-+class ScopedAllowBlockingForAsarTempFile;
-+} // namespace asar (electron)
- namespace ash {
- class MojoUtils;
- class BrowserDataBackMigrator;
-@@ -243,6 +249,29 @@ class BackendImpl;
- class InFlightIO;
- bool CleanupDirectorySync(const base::FilePath&);
- }  // namespace disk_cache
-+namespace electron {
-+class ScopedAllowBlockingForAPIServiceHeapSnapshot;
-+class ScopedAllowBlockingForBindingHeapSnapshot;
-+class ScopedAllowBlockingCommandLineSwitches;
-+class ScopedAllowBlockingForDidFinishLaunching;
-+class ScopedAllowBlockingForElectronPathProvider;
-+class ScopedAllowBlockingForHeapSnapshotFile;
-+class ScopedAllowBlockingForElectronDownloadPath;
-+class ScopedAllowBlockingForCrashReporter;
-+class ScopedAllowBlockingForFilePath;
-+}
-+namespace electron::api {
-+class ScopedAllowBlockingForAppLogs;
-+class ScopedAllowBlockingForHeapSnapshot;
-+class ScopedAllowBlockingForPrinting;
-+class ScopedAllowBlockingForNativeImage;
-+}
-+namespace electron::api::crash_reporter {
-+class ScopedAllowBlockingForCrashReporter;
-+}
-+namespace electron::util {
-+class ScopedAllowBlockingForSkiaUtil;
-+}
- namespace enterprise_connectors {
- class LinuxKeyRotationCommand;
- }  // namespace enterprise_connectors
-@@ -250,6 +279,9 @@ namespace extensions {
+@@ -250,6 +251,9 @@ namespace extensions {
  class InstalledLoader;
  class UnpackedInstaller;
  }  // namespace extensions
@@ -79,7 +38,18 @@ index 07fe653bd2d231b3dcab405dec5da21a576aa5d5..56ff62af7a33aee56e607125c44967e0
  namespace font_service::internal {
  class MappedFontFile;
  }
-@@ -521,6 +553,7 @@ class BASE_EXPORT ScopedAllowBlocking {
+@@ -506,8 +510,9 @@ class BASE_EXPORT ScopedDisallowBlocking {
+ 
+ class BASE_EXPORT ScopedAllowBlocking {
+  public:
+-  ScopedAllowBlocking(const ScopedAllowBlocking&) = delete;
++  ScopedAllowBlocking(const Location& from_here = Location::Current());
+   ScopedAllowBlocking& operator=(const ScopedAllowBlocking&) = delete;
++  ~ScopedAllowBlocking();
+ 
+  private:
+   FRIEND_TEST_ALL_PREFIXES(ThreadRestrictionsTest,
+@@ -521,6 +526,7 @@ class BASE_EXPORT ScopedAllowBlocking {
    friend class ::DesktopNotificationBalloon;
    friend class ::FirefoxProfileLock;
    friend class ::GaiaConfig;
@@ -87,31 +57,21 @@ index 07fe653bd2d231b3dcab405dec5da21a576aa5d5..56ff62af7a33aee56e607125c44967e0
    friend class ::ProfileImpl;
    friend class ::ScopedAllowBlockingForProfile;
    friend class ::StartupTabProviderImpl;
-@@ -560,8 +593,27 @@ class BASE_EXPORT ScopedAllowBlocking {
-   friend class crosapi::LacrosThreadTypeDelegate;
-   friend class crypto::ScopedAllowBlockingForNSS;  // http://crbug.com/59847
+@@ -562,6 +568,7 @@ class BASE_EXPORT ScopedAllowBlocking {
    friend class drive::FakeDriveService;
-+  friend class asar::ScopedAllowBlockingForAsarArchive;
-+  friend class asar::ScopedAllowBlockingForAsarCache;
-+  friend class asar::ScopedAllowBlockingForAsarTempFile;
-+  friend class electron::ScopedAllowBlockingForAPIServiceHeapSnapshot;
-+  friend class electron::ScopedAllowBlockingForBindingHeapSnapshot;
-+  friend class electron::ScopedAllowBlockingCommandLineSwitches;
-+  friend class electron::ScopedAllowBlockingForDidFinishLaunching;
-+  friend class electron::ScopedAllowBlockingForElectronPathProvider;
-+  friend class electron::ScopedAllowBlockingForHeapSnapshotFile;
-+  friend class electron::ScopedAllowBlockingForElectronDownloadPath;
-+  friend class electron::ScopedAllowBlockingForCrashReporter;
-+  friend class electron::ScopedAllowBlockingForFilePath;
-+  friend class electron::api::ScopedAllowBlockingForHeapSnapshot;
-+  friend class electron::api::ScopedAllowBlockingForAppLogs;
-+  friend class electron::api::ScopedAllowBlockingForPrinting;
-+  friend class electron::api::ScopedAllowBlockingForNativeImage;
-+  friend class electron::api::crash_reporter::ScopedAllowBlockingForCrashReporter;
-+  friend class electron::util::ScopedAllowBlockingForSkiaUtil;
    friend class extensions::InstalledLoader;
    friend class extensions::UnpackedInstaller;
 +  friend class file_dialog::ScopedAllowBlockingForFileDialog;
    friend class font_service::internal::MappedFontFile;
    friend class ios_web_view::WebViewBrowserState;
    friend class media::FileVideoCaptureDeviceFactory;
+@@ -614,9 +621,6 @@ class BASE_EXPORT ScopedAllowBlocking {
+   friend int chromeos::system::NumberOfPhysicalCores();
+   friend bool disk_cache::CleanupDirectorySync(const base::FilePath&);
+ 
+-  ScopedAllowBlocking(const Location& from_here = Location::Current());
+-  ~ScopedAllowBlocking();
+-
+ #if DCHECK_IS_ON()
+   std::unique_ptr<BooleanWithStack> was_disallowed_;
+ #endif
