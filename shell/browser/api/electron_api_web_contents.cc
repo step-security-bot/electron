@@ -446,7 +446,7 @@ std::pair<std::string, std::u16string> GetDeviceNameToUse(
 #if BUILDFLAG(IS_WIN)
   // Blocking is needed here because Windows printer drivers are oftentimes
   // not thread-safe and have to be accessed on the UI thread.
-  base::ThreadRestrictions::ScopedAllowIO allow_io;
+  base::ScopedAllowBlocking allow_blocking;
 #endif
 
   if (!device_name.empty()) {
