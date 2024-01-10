@@ -12,6 +12,11 @@ jobs:
     if: github.event.label.name == 'backport/requested 🗳'
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
+
       - name: Trigger Slack workflow
         uses: slackapi/slack-github-action@e28cf165c92ffef168d23c5c9000cffc8a25e117 # v1.24.0
         with:
@@ -26,6 +31,11 @@ jobs:
     if: github.event.label.name == 'deprecation-review/complete ✅'
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
+
       - name: Generate GitHub App token
         uses: electron/github-app-auth-action@cc6751b3b5e4edc5b9a4ad0a021ac455653b6dc8 # v1.0.0
         id: generate-token

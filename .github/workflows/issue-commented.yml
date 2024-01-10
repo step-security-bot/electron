@@ -13,6 +13,11 @@ jobs:
     if: ${{ contains(github.event.issue.labels.*.name, 'blocked/need-repro') && !contains(fromJSON('["MEMBER", "OWNER"]'), github.event.comment.author_association) && github.event.comment.user.type != 'Bot' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+        with:
+          egress-policy: audit
+
       - name: Generate GitHub App token
         uses: electron/github-app-auth-action@cc6751b3b5e4edc5b9a4ad0a021ac455653b6dc8 # v1.0.0
         id: generate-token

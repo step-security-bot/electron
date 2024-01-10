@@ -18,6 +18,11 @@ jobs:
       pull-requests: write  # to create a new PR with updated Appveyor images
     runs-on: ubuntu-latest
     steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@eb238b55efaa70779f274895e782ed17c84f2895 # v2.6.1
+      with:
+        egress-policy: audit
+
     - name: Checkout
       uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.1.0
       with:
